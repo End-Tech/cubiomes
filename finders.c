@@ -965,7 +965,7 @@ Pos getOutpostPos(int64_t seed, const int regionX, const int regionZ, int* isVal
     // if the village is within the same region is not close enough
     // we have to check the neighbouring regions that are potentially in range
     // first step is to find out which (if any) neighbouring regions are in range
-    neighbouringRegionX = (pos.x-10) >> 5 + (pos.x+10) >> 5;
+    neighbouringRegionX = (pos.x-10 >> 5) + (pos.x+10 >> 5);
     // this will return either 1 or -1 if the 10 chunk area in + or - x direction
     // overlaps a different region - will return 0 if it doesnt overlap in either
     if (neighbouringRegionX != 0) {
@@ -978,7 +978,7 @@ Pos getOutpostPos(int64_t seed, const int regionX, const int regionZ, int* isVal
         }
 
         // perhaps our outpost generated on a corder and now needs to look at 2 other regions as well:
-        neighbouringRegionZ = (pos.z-10) >> 5 + (pos.z+10) >> 5;
+        neighbouringRegionZ = (pos.z-10 >> 5) + (pos.z+10 >> 5);
         if (neighbouringRegionZ != 0) {
             villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed,
                     regionX, neighbouringRegionZ + regionZ);
@@ -994,7 +994,7 @@ Pos getOutpostPos(int64_t seed, const int regionX, const int regionZ, int* isVal
             }
         }
     } else {
-        neighbouringRegionZ = (pos.z-10) >> 5 + (pos.z+10) >> 5;
+        neighbouringRegionZ = (pos.z-10 >> 5) + (pos.z+10 >> 5);
         if (neighbouringRegionZ != 0) {
             villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed,
                     regionX, neighbouringRegionZ + regionZ);
@@ -1053,7 +1053,7 @@ Pos getOutpostRegionInChunk(int64_t seed, const int regionX, const int regionZ, 
     // if the village is within the same region is not close enough
     // we have to check the neighbouring regions that are potentially in range
     // first step is to find out which (if any) neighbouring regions are in range
-    neighbouringRegionX = (pos.x-10) >> 5 + (pos.x+10) >> 5;
+    neighbouringRegionX = (pos.x-10 >> 5) + (pos.x+10 >> 5);
     // this will return either 1 or -1 if the 10 chunk area in + or - x direction
     // overlaps a different region - will return 0 if it doesnt overlap in either
     if (neighbouringRegionX != 0) {
@@ -1066,7 +1066,7 @@ Pos getOutpostRegionInChunk(int64_t seed, const int regionX, const int regionZ, 
         }
 
         // perhaps our outpost generated on a corder and now needs to look at 2 other regions as well:
-        neighbouringRegionZ = (pos.z-10) >> 5 + (pos.z+10) >> 5;
+        neighbouringRegionZ = (pos.z-10 >> 5) + (pos.z+10 >> 5);
         if (neighbouringRegionZ != 0) {
             villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed,
                     regionX, neighbouringRegionZ + regionZ);
@@ -1082,7 +1082,7 @@ Pos getOutpostRegionInChunk(int64_t seed, const int regionX, const int regionZ, 
             }
         }
     } else {
-        neighbouringRegionZ = (pos.z-10) >> 5 + (pos.z+10) >> 5;
+        neighbouringRegionZ = (pos.z-10 >> 5) + (pos.z+10 >> 5);
         if (neighbouringRegionZ != 0) {
             villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed,
                     regionX, neighbouringRegionZ + regionZ);
