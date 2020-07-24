@@ -274,6 +274,29 @@ Pos getLargeStructurePos(const StructureConfig config, int64_t seed,
 Pos getLargeStructureChunkInRegion(const StructureConfig config, int64_t seed,
         const int regionX, const int regionZ);
 
+/* Fast implementations to get the possible Outpost chunk or position at which
+ * the generation attempt will occur. Requires the calculation of up to 4
+ * potential village positions and is thus much slower than previous functions.
+ * Will set isValid depending on whether the outpost can actually generate according
+ * to Minecraft 1.16 rules.
+ * For Minecraft 1.15 and below the value of isValid can be ignored and the normal
+ * getStructure.. functions should probably be used instead.
+ * Alternatively NULL can be passed to isValid to disable the evaluation.
+ * Will return the requested position regardless of the value of isValid
+ */
+Pos getOutpostPos(
+        int64_t seed,
+        const int regionX,
+        const int regionZ,
+        int* isValid
+        );
+Pos getOutpostChunkInRegion(
+        int64_t seed,
+        const int regionX,
+        const int regionZ,
+        int* isValid
+        );
+
 /* Some structures check each chunk individually for viability.
  * The placement and biome check within a valid chunk is at block position (9,9).
  */

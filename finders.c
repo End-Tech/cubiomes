@@ -917,6 +917,185 @@ Pos getLargeStructureChunkInRegion(StructureConfig config, int64_t seed,
     return pos;
 }
 
+Pos getOutpostPos(int64_t seed, const int regionX, const int regionZ, int* isValid) {
+    // this part is just copied from getStructureChunkInRegion for the most part
+    Pos pos;
+    // set seed
+    int64_t posSeed = regionX*341873128712 + regionZ*132897987541 + seed + OUTPOST_CONFIG.seed;
+    posSeed = (posSeed ^ 0x5deece66dLL);// & ((1LL << 48) - 1);
+
+    posSeed = (posSeed * 0x5deece66dLL + 0xbLL) & 0xffffffffffff;
+
+    if (OUTPOST_CONFIG.chunkRange & (OUTPOST_CONFIG.chunkRange-1))
+    {
+        pos.x = (int)(posSeed >> 17) % OUTPOST_CONFIG.chunkRange;
+
+        posSeed = (posSeed * 0x5deece66dLL + 0xbLL) & 0xffffffffffff;
+        pos.z = (int)(posSeed >> 17) % OUTPOST_CONFIG.chunkRange;
+    }
+    else
+    {
+        // Java RNG treats powers of 2 as a special case.
+        pos.x = (OUTPOST_CONFIG.chunkRange * (posSeed >> 17)) >> 31;
+
+        seed = (seed * 0x5deece66dLL + 0xbLL) & 0xffffffffffff;
+        pos.z = (OUTPOST_CONFIG.chunkRange * (posSeed >> 17)) >> 31;
+    }
+
+    Pos retPos;
+    retPos.x = ((regionX*OUTPOST_CONFIG.regionSize + pos.x) << 4) + 9;
+    retPos.z = ((regionZ*OUTPOST_CONFIG.regionSize + pos.z) << 4) + 9;
+
+    int neighbouringRegionX;
+    int neighbouringRegionZ;
+
+    if (isValid == NULL) {
+        return retPos;
+    }
+
+    // this is where it starts to differ
+    // We need to find a village in a 10 chunk distance to our outpost
+    // first we start with the village in the same region
+    // this code assumes that VILLAGE_CONFIG.region_size == OUTPOST_CONFIG.region_size
+    Pos villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed, regionX, regionZ);
+    if (abs(pos.x - villagePos.x) <= 10 && abs(pos.z - villagePos.z) <= 10) {
+        *isValid = 0;
+        return retPos;
+    }
+    // if the village is within the same region is not close enough
+    // we have to check the neighbouring regions that are potentially in range
+    // first step is to find out which (if any) neighbouring regions are in range
+    neighbouringRegionX = (pos.x-10) >> 5 + (pos.x+10) >> 5;
+    // this will return either 1 or -1 if the 10 chunk area in + or - x direction
+    // overlaps a different region - will return 0 if it doesnt overlap in either
+    if (neighbouringRegionX != 0) {
+        villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed,
+                neighbouringRegionX + regionX, regionZ);
+        // then we check the village in the neighbouring region
+        if (abs(pos.x - villagePos.x - (neighbouringRegionX << 5)) <= 10 && abs(pos.z - villagePos.z) <= 10) {
+            *isValid = 0;
+            return retPos;
+        }
+
+        // perhaps our outpost generated on a corder and now needs to look at 2 other regions as well:
+        neighbouringRegionZ = (pos.z-10) >> 5 + (pos.z+10) >> 5;
+        if (neighbouringRegionZ != 0) {
+            villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed,
+                    regionX, neighbouringRegionZ + regionZ);
+            if (abs(pos.x - villagePos.x <= 10) && abs(pos.z - villagePos.z - (neighbouringRegionZ << 5)) <= 10) {
+                *isValid = 0;
+                return retPos;
+            }
+            villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed,
+                    neighbouringRegionX + regionX, neighbouringRegionZ + regionZ);
+            if (abs(pos.x - villagePos.x - (neighbouringRegionX << 5)) <= 10 && abs(pos.z - villagePos.z - (neighbouringRegionZ << 5)) <= 10) {
+                *isValid = 0;
+                return retPos;
+            }
+        }
+    } else {
+        neighbouringRegionZ = (pos.z-10) >> 5 + (pos.z+10) >> 5;
+        if (neighbouringRegionZ != 0) {
+            villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed,
+                    regionX, neighbouringRegionZ + regionZ);
+            if (abs(pos.x - villagePos.x <= 10) && abs(pos.z - villagePos.z - (neighbouringRegionZ << 5)) <= 10) {
+                *isValid = 0;
+                return retPos;
+            }
+        }
+    }
+    // we tried everything no village nearby
+    *isValid = 1;
+    return retPos;
+}
+
+Pos getOutpostRegionInChunk(int64_t seed, const int regionX, const int regionZ, int* isValid) {
+    // this part is just copied from getStructureChunkInRegion for the most part
+    Pos pos;
+    // set seed
+    int64_t posSeed = regionX*341873128712 + regionZ*132897987541 + seed + OUTPOST_CONFIG.seed;
+    posSeed = (posSeed ^ 0x5deece66dLL);// & ((1LL << 48) - 1);
+
+    posSeed = (posSeed * 0x5deece66dLL + 0xbLL) & 0xffffffffffff;
+
+    if (OUTPOST_CONFIG.chunkRange & (OUTPOST_CONFIG.chunkRange-1))
+    {
+        pos.x = (int)(posSeed >> 17) % OUTPOST_CONFIG.chunkRange;
+
+        posSeed = (posSeed * 0x5deece66dLL + 0xbLL) & 0xffffffffffff;
+        pos.z = (int)(posSeed >> 17) % OUTPOST_CONFIG.chunkRange;
+    }
+    else
+    {
+        // Java RNG treats powers of 2 as a special case.
+        pos.x = (OUTPOST_CONFIG.chunkRange * (posSeed >> 17)) >> 31;
+
+        seed = (seed * 0x5deece66dLL + 0xbLL) & 0xffffffffffff;
+        pos.z = (OUTPOST_CONFIG.chunkRange * (posSeed >> 17)) >> 31;
+    }
+
+    int neighbouringRegionX;
+    int neighbouringRegionZ;
+
+    if (isValid == NULL) {
+        return pos;
+    }
+
+    // this is where it starts to differ
+    // We need to find a village in a 10 chunk distance to our outpost
+    // first we start with the village in the same region
+    // this code assumes that VILLAGE_CONFIG.region_size == OUTPOST_CONFIG.region_size
+    Pos villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed, regionX, regionZ);
+    if (abs(pos.x - villagePos.x) <= 10 && abs(pos.z - villagePos.z) <= 10) {
+        *isValid = 0;
+        return pos;
+    }
+    // if the village is within the same region is not close enough
+    // we have to check the neighbouring regions that are potentially in range
+    // first step is to find out which (if any) neighbouring regions are in range
+    neighbouringRegionX = (pos.x-10) >> 5 + (pos.x+10) >> 5;
+    // this will return either 1 or -1 if the 10 chunk area in + or - x direction
+    // overlaps a different region - will return 0 if it doesnt overlap in either
+    if (neighbouringRegionX != 0) {
+        villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed,
+                neighbouringRegionX + regionX, regionZ);
+        // then we check the village in the neighbouring region
+        if (abs(pos.x - villagePos.x - (neighbouringRegionX << 5)) <= 10 && abs(pos.z - villagePos.z) <= 10) {
+            *isValid = 0;
+            return pos;
+        }
+
+        // perhaps our outpost generated on a corder and now needs to look at 2 other regions as well:
+        neighbouringRegionZ = (pos.z-10) >> 5 + (pos.z+10) >> 5;
+        if (neighbouringRegionZ != 0) {
+            villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed,
+                    regionX, neighbouringRegionZ + regionZ);
+            if (abs(pos.x - villagePos.x <= 10) && abs(pos.z - villagePos.z - (neighbouringRegionZ << 5)) <= 10) {
+                *isValid = 0;
+                return pos;
+            }
+            villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed,
+                    neighbouringRegionX + regionX, neighbouringRegionZ + regionZ);
+            if (abs(pos.x - villagePos.x - (neighbouringRegionX << 5)) <= 10 && abs(pos.z - villagePos.z - (neighbouringRegionZ << 5)) <= 10) {
+                *isValid = 0;
+                return pos;
+            }
+        }
+    } else {
+        neighbouringRegionZ = (pos.z-10) >> 5 + (pos.z+10) >> 5;
+        if (neighbouringRegionZ != 0) {
+            villagePos = getStructureChunkInRegion(VILLAGE_CONFIG, seed,
+                    regionX, neighbouringRegionZ + regionZ);
+            if (abs(pos.x - villagePos.x <= 10) && abs(pos.z - villagePos.z - (neighbouringRegionZ << 5)) <= 10) {
+                *isValid = 0;
+                return pos;
+            }
+        }
+    }
+    // we tried everything no village nearby
+    *isValid = 1;
+    return pos;
+}
 
 int isMineshaftChunk(int64_t seed, const int chunkX, const int chunkZ)
 {
